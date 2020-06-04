@@ -21,6 +21,10 @@ bool isInDivision(int a, int down, int up) {
     return a >= down && a <= up;
 }
 
+int inDivision(int a, int b, int c) {
+    return std::max(std::min(a, c), b);
+}
+
 int inDivision(int a) {
     return std::max(std::min(a, 255), 0);
 }
@@ -74,6 +78,22 @@ int countPixels(cv::Mat& I, int value) {
     return sum;
 }
 
+int countPixels(cv::Mat& I, int value, int fromX, int fromY, int toX, int toY) {
+    int sum = 0;
+    CV_Assert(I.depth() != sizeof(uchar));
+    switch (I.channels()) {
+    case 3:
+        cv::Mat_<cv::Vec3b> _I = I;
+        for (int i = fromY; i < toY; ++i)
+            for (int j = fromX; j < toX; ++j) {
+                if ((_I(i, j)[0] + _I(i, j)[1] + _I(i, j)[2]) / 3 == value)
+                    ++sum;
+            }
+        break;
+    }
+    return sum;
+}
+
 void printHistogram(const cv::Mat& I) {
     CV_Assert(I.depth() != sizeof(uchar));
     cv::Mat  res(I.rows, I.cols, CV_8UC3);
@@ -116,6 +136,13 @@ double maleM(cv::Mat& I, int p, int q) {
             }
         break;
     }
+    return sum;
+}
+
+double maleM(std::vector<Point> vec, int p, int q) {
+    double sum = 0;
+    for (auto point : vec) 
+        sum += pow(point.x + 1, p) * pow(point.y + 1, q);
     return sum;
 }
 
@@ -223,6 +250,23 @@ double liczNachylenie(MyPoint p1, MyPoint p2) {
 
 }
 
+double M1(std::vector<Point> image) {
+    double m00 = maleM(image, 0, 0);
+    double M20 = maleM(image, 2, 0) - pow(maleM(image, 1, 0), 2) / m00;
+    double M02 = maleM(image, 0, 2) - pow(maleM(image, 0, 1), 2) / m00;
+    double M1 = (M20 + M02) / pow(m00, 2);
+    return M1;
+}
+
+double M7(std::vector<Point> image) {
+    double m00 = maleM(image, 0, 0);
+    double M20 = maleM(image, 2, 0) - pow(maleM(image, 1, 0), 2) / m00;
+    double M02 = maleM(image, 0, 2) - pow(maleM(image, 0, 1), 2) / m00;
+    double M11 = (double)maleM(image, 1, 1) - (double)(maleM(image, 1, 0) * maleM(image, 0, 1)) / m00;
+    double M7 = (M20 * M02 - M11 * M11) / pow(m00, 4);
+    return M7;
+}
+
 void countCoef(std::vector<std::string> names, int filter[3][3]) {
     for (auto name : names) {
         cv::Mat original = cv::imread(name);
@@ -274,13 +318,6 @@ segment.push_back(p);
 }
 
 void calcSegment(cv::Mat_<cv::Vec3b>& image, std::vector<Point>& segment, int i, int j, int rows, int cols) {
-    /*image(i, j)[2] = CHECKED;
-    image(i, j)[1] = CHECKED;
-    image(i, j)[0] = CHECKED;
-    Point p;
-    p.x = j;
-    p.y = i;
-    segment.push_back(p);*/
     addToSegment(image, segment, i, j);
     for (size_t a = 0; a < segment.size(); ++a) {
         Point q = segment[a];
@@ -350,6 +387,68 @@ std::vector<std::vector<Point>> countBoundingSqueres(std::vector<std::vector<Poi
         vec.push_back(max);
         result.push_back(vec);
     }
+    return result;
+}
+
+std::vector<std::vector<Point>> findLogos(std::vector<std::vector<Point>>& squeres, cv::Mat& red, cv::Mat& blue, cv::Mat& white) {
+    std::vector<std::vector<Point>> res;
+    int rows = red.rows;
+    int cols = red.cols;
+    for (auto squere : squeres) {
+        Point min = squere[0];
+        Point max = squere[1];
+        max.x = inDivision(max.x + (max.x - min.x) / 2, 0, cols - 1);
+        max.y = inDivision(max.y + (max.y - min.y) / 2, 0, rows - 1);
+        int redPixels = countPixels(red, CHECKED, min.x, min.y, max.x, max.y);
+        int bluePixels = countPixels(blue, POSITIVE, min.x, min.y, max.x, max.y);
+        int whitePixels = countPixels(white, POSITIVE, min.x, min.y, max.x, max.y);
+        //std::cout << redPixels << "  " << bluePixels << "  " << whitePixels << "  " << std::endl;
+        if (redPixels > 10 && bluePixels > redPixels / 3 && whitePixels > redPixels / 3 && whitePixels < 2 * redPixels) {
+            std::vector<Point> vec;
+            vec.push_back(min);
+            vec.push_back(max);
+            res.push_back(vec);
+        }
+    }
+    return res;
+}
+
+cv::Mat drawSqueres(std::vector<std::vector<Point>>& squeres, cv::Mat& image) {
+    cv::Mat_<cv::Vec3b> _I = image;
+    for (auto squere : squeres) {
+        Point min = squere[0];
+        Point max = squere[1];
+        for (int i = min.x; i <= max.x; ++i) {
+            _I(min.y, i)[2] = 0;
+            _I(min.y, i)[1] = 255;
+            _I(min.y, i)[0] = 0;
+            _I(max.y, i)[2] = 0;
+            _I(max.y, i)[1] = 255;
+            _I(max.y, i)[0] = 0;
+        }
+        for (int i = min.y; i <= max.y; ++i) {
+            _I(i, min.x)[2] = 0;
+            _I(i, min.x)[1] = 255;
+            _I(i, min.x)[0] = 0;
+            _I(i, max.x)[2] = 0;
+            _I(i, max.x)[1] = 255;
+            _I(i, max.x)[0] = 0;
+        }
+    }
+    image = _I;
+    return image;
+}
+
+std::vector<std::vector<Point>> selectize(std::vector<std::vector<Point>>& vec) {
+    std::vector<std::vector<Point>> result;
+    for (auto area : vec) {
+        double m1 = M1(area);
+        double m7 = M7(area);
+        if (m1 > 0.15 && m1 < 0.3 &&
+            m7 > 0.006 && m7 < 0.007)
+            result.push_back(area);
+    }
+    return result;
 }
 
 int main(int, char *[]) {
@@ -361,24 +460,29 @@ int main(int, char *[]) {
         {0,-1,0},
 
     };
-    for (int i = 1; i <= 1; ++i) {
+    for (int i = 1; i <= 10; ++i) {
         cv::Mat image = cv::imread("./dataSet/" + std::to_string(i) + ".jpg");
         cv::Mat dest;
         cv::Size size(1152, 576);
         resize(image, dest, size);
         
         //cv::imshow("Oryginal", image);
-        auto red = findByColor(dest, 150, 0, 0, 255, 90, 90);
-        auto blue = findByColor(dest, 0, 0, 100, 100, 100, 255);
-        auto white = findByColor(dest, 170, 170, 170, 255, 255, 255);
+        auto red = findByColor(dest, 150, 0, 0, 255, 120, 120);
+        auto blue = findByColor(dest, 0, 0, 80, 100, 100, 255);
+        auto white = findByColor(dest, 150, 150, 150, 255, 255, 255);
 
         auto vec = segmentize(red);
+        vec = selectize(vec);
         auto boundingSqueres = countBoundingSqueres(vec);
+        auto logos = findLogos(boundingSqueres, red, blue, white);
+        auto imageWithSqueres = drawSqueres(logos, dest);
+        cv::imshow("result" + std::to_string(i), imageWithSqueres);
+        cv::imwrite("./resultsSelectize/" + std::to_string(i) + ".jpg", imageWithSqueres);
        // print(vec);
 
-        cv::imshow("Red", red);
-        cv::imshow("Blue", blue);
-        cv::imshow("White", white);
+        /*cv::imshow("red", red);
+        cv::imshow("blue", blue);
+        cv::imshow("White", white);*/
     }
     cv::waitKey(-1); 
     
