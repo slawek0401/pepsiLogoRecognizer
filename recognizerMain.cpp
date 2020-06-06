@@ -200,6 +200,90 @@ cv::Mat findByColor(cv::Mat& image, int redFrom, int greenFrom, int blueFrom, in
     return res;
 }
 
+cv::Mat findBlue(cv::Mat& image) {
+    cv::Mat res(image.rows, image.cols, CV_8UC3);
+    switch (image.channels()) {
+    case 3:
+        cv::Mat_<cv::Vec3b> _I = image;
+        cv::Mat_<cv::Vec3b> _R = res;
+        for (int i = 0; i < image.rows; ++i)
+            for (int j = 0; j < image.cols; ++j) {
+                uchar red = _I(i, j)[2];
+                uchar green = _I(i, j)[1];
+                uchar blue = _I(i, j)[0];
+                if (blue > green + 20 && blue > red + 20 && blue > 80) {
+                    _R(i, j)[0] = POSITIVE;
+                    _R(i, j)[1] = POSITIVE;
+                    _R(i, j)[2] = POSITIVE;
+                }
+                else {
+                    _R(i, j)[0] = NEGATIVE;
+                    _R(i, j)[1] = NEGATIVE;
+                    _R(i, j)[2] = NEGATIVE;
+                }
+            }
+        res = _R;
+        break;
+    }
+    return res;
+}
+
+cv::Mat findRed(cv::Mat& image) {
+    cv::Mat res(image.rows, image.cols, CV_8UC3);
+    switch (image.channels()) {
+    case 3:
+        cv::Mat_<cv::Vec3b> _I = image;
+        cv::Mat_<cv::Vec3b> _R = res;
+        for (int i = 0; i < image.rows; ++i)
+            for (int j = 0; j < image.cols; ++j) {
+                uchar red = _I(i, j)[2];
+                uchar green = _I(i, j)[1];
+                uchar blue = _I(i, j)[0];
+                if (red > green + 20 && red > blue + 20 && red > 80) {
+                    _R(i, j)[0] = POSITIVE;
+                    _R(i, j)[1] = POSITIVE;
+                    _R(i, j)[2] = POSITIVE;
+                }
+                else {
+                    _R(i, j)[0] = NEGATIVE;
+                    _R(i, j)[1] = NEGATIVE;
+                    _R(i, j)[2] = NEGATIVE;
+                }
+            }
+        res = _R;
+        break;
+    }
+    return res;
+}
+
+cv::Mat findWhite(cv::Mat& image) {
+    cv::Mat res(image.rows, image.cols, CV_8UC3);
+    switch (image.channels()) {
+    case 3:
+        cv::Mat_<cv::Vec3b> _I = image;
+        cv::Mat_<cv::Vec3b> _R = res;
+        for (int i = 0; i < image.rows; ++i)
+            for (int j = 0; j < image.cols; ++j) {
+                short red = _I(i, j)[2];
+                short green = _I(i, j)[1];
+                short blue = _I(i, j)[0];
+                if ( abs(red - green) < 20 && abs(red - blue) < 20 && abs(blue - green) < 20 && (red + green + blue) > 300) {
+                    _R(i, j)[0] = POSITIVE;
+                    _R(i, j)[1] = POSITIVE;
+                    _R(i, j)[2] = POSITIVE;
+                }
+                else {
+                    _R(i, j)[0] = NEGATIVE;
+                    _R(i, j)[1] = NEGATIVE;
+                    _R(i, j)[2] = NEGATIVE;
+                }
+            }
+        res = _R;
+        break;
+    }
+    return res;
+}
+
 std::vector<cv::Mat> seperateArrows(cv::Mat& image) {
     std::vector<cv::Mat> res;
     for (int red = 0; red <= 180; red += 45) {
@@ -209,7 +293,7 @@ std::vector<cv::Mat> seperateArrows(cv::Mat& image) {
     return res;
 }
 
-MyPoint findMiddle(cv::Mat image) {
+Point findMiddle(cv::Mat image) {
     int minX = image.cols;
     int minY = image.rows;
     int maxX = 0;
@@ -235,13 +319,13 @@ MyPoint findMiddle(cv::Mat image) {
             }
         break;
     }
-    MyPoint p;
+    Point p;
     p.x = (minX + maxX) / 2;
     p.y = (minY + maxY) / 2;
     return p;
 }
 
-double liczNachylenie(MyPoint p1, MyPoint p2) {
+double liczNachylenie(Point p1, Point p2) {
     double miara = atan((double)(p2.y - p1.y) / (p2.x - p1.x)) * 180 / M_PI;
     if (p2.x >= p1.x ) // I lub IV cwiartka
         return miara;
@@ -284,8 +368,8 @@ void countCoef(std::vector<std::string> names, int filter[3][3]) {
             double m00 = maleM(image, 0, 0);
             double iFalka = (double)maleM(image, 1, 0) / m00;
             double jFalka = (double)maleM(image, 0, 1) / m00;
-            MyPoint p1 = findMiddle(image);
-            MyPoint p2;
+            Point p1 = findMiddle(image);
+            Point p2;
             p2.x = jFalka;
             p2.y = 512 - iFalka;
             p1.y = 512 - p1.y;
@@ -334,15 +418,17 @@ void calcSegment(cv::Mat_<cv::Vec3b>& image, std::vector<Point>& segment, int i,
     
 }
 
-std::vector<std::vector<Point>> segmentize(cv::Mat& image) {
+std::vector<std::vector<Point>> segmentize(cv::Mat& image, int fromX = 0, int fromY = 0, int toX = 0, int toY = 0) {
     cv::Mat res(image.rows, image.cols, CV_8UC3);
     std::vector<std::vector<Point>> result;
-
+    
+    toX = toX == 0 ? image.cols : toX;
+    toY = toY == 0 ? image.rows : toY;
     switch (image.channels()) {
     case 3:
         cv::Mat_<cv::Vec3b> _I = image;
-        for (int i = 0; i < image.rows; ++i)
-            for (int j = 0; j < image.cols; ++j) {
+        for (int i = fromY; i < toY; ++i)
+            for (int j = fromX; j < toX; ++j) {
                 if (_I(i, j)[2] == POSITIVE){
                     std::vector<Point> segment;
                     calcSegment(_I, segment,  i, j, image.rows, image.cols);
@@ -403,7 +489,7 @@ std::vector<std::vector<Point>> findLogos(std::vector<std::vector<Point>>& squer
         int bluePixels = countPixels(blue, POSITIVE, min.x, min.y, max.x, max.y);
         int whitePixels = countPixels(white, POSITIVE, min.x, min.y, max.x, max.y);
         //std::cout << redPixels << "  " << bluePixels << "  " << whitePixels << "  " << std::endl;
-        if (redPixels > 10 && bluePixels > redPixels / 3 && whitePixels > redPixels / 3 && whitePixels < 2 * redPixels) {
+        if (redPixels > 10 && bluePixels > redPixels / 6 && whitePixels > redPixels / 9 /*&& whitePixels < 2 * redPixels*/) {
             std::vector<Point> vec;
             vec.push_back(min);
             vec.push_back(max);
@@ -451,25 +537,66 @@ std::vector<std::vector<Point>> selectize(std::vector<std::vector<Point>>& vec) 
     return result;
 }
 
+int mean(cv::Mat_<cv::Vec3b>& image, int fromX, int fromY, int toX, int toY, int channel) {
+    unsigned sum = 0;
+    unsigned n = 0;
+    for (int i = fromX; i < toX; ++i)
+        for (int j = fromY; j < toY; ++j) {
+            sum += image(i, j)[channel];
+            ++n;
+        }
+    return sum / n;
+}
+
+cv::Mat myResize(cv::Mat &image, int value) {
+    cv::Mat res(image.rows / value, image.cols / value, CV_8UC3);
+    switch (image.channels()) {
+    case 3:
+        cv::Mat_<cv::Vec3b> _I = image;
+        cv::Mat_<cv::Vec3b> _R = res;
+        for (int i = 0; i < _R.rows - 1; ++i)
+            for (int j = 0; j < _R.cols - 1; ++j) {
+                int fromX = i * value;
+                int fromY = j * value;
+                int toX = fromX + value;
+                int toY = fromY + value;
+                _R(i, j)[0] = mean(_I, fromX, fromY, toX, toY, 0);
+                _R(i, j)[1] = mean(_I, fromX, fromY, toX, toY, 1);
+                _R(i, j)[2] = mean(_I, fromX, fromY, toX, toY, 2);
+            }
+        res = _R;
+        break;
+    }
+    return res;
+}
+
 int main(int, char *[]) {
     std::cout << "Start ..." << std::endl;
 
     int filter[3][3] = {
-        {0,-1,0},
-        {-1,4,-1},
-        {0,-1,0},
+        {1,1,1},
+        {1,1,1},
+        {1,1,1},
 
     };
-    for (int i = 1; i <= 10; ++i) {
+    for (int i = 1; i <= 1; ++i) {
         cv::Mat image = cv::imread("./dataSet/" + std::to_string(i) + ".jpg");
-        cv::Mat dest;
-        cv::Size size(1152, 576);
-        resize(image, dest, size);
+        cv::Mat dest;// = myResize(image, 4);
         
+        cv::Size size(1152, 576);
+        if (image.cols > 1500)
+            resize(image, dest, size);
+        else
+            dest = image;
+        executeFilter(dest, filter);
         //cv::imshow("Oryginal", image);
-        auto red = findByColor(dest, 150, 0, 0, 255, 120, 120);
+        /*auto red = findByColor(dest, 150, 0, 0, 255, 120, 120);
         auto blue = findByColor(dest, 0, 0, 80, 100, 100, 255);
-        auto white = findByColor(dest, 150, 150, 150, 255, 255, 255);
+        auto white = findByColor(dest, 150, 150, 150, 255, 255, 255);*/
+
+        auto red = findRed(dest);
+        auto blue = findBlue(dest);
+        auto white = findWhite(dest);
 
         auto vec = segmentize(red);
         vec = selectize(vec);
@@ -477,12 +604,12 @@ int main(int, char *[]) {
         auto logos = findLogos(boundingSqueres, red, blue, white);
         auto imageWithSqueres = drawSqueres(logos, dest);
         cv::imshow("result" + std::to_string(i), imageWithSqueres);
-        cv::imwrite("./resultsSelectize/" + std::to_string(i) + ".jpg", imageWithSqueres);
+        cv::imwrite("./afterFilter/" + std::to_string(i) + ".jpg", imageWithSqueres);
        // print(vec);
 
-        /*cv::imshow("red", red);
+        cv::imshow("red", red);
         cv::imshow("blue", blue);
-        cv::imshow("White", white);*/
+        cv::imshow("White", white);
     }
     cv::waitKey(-1); 
     
