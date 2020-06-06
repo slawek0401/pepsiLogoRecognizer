@@ -23,6 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Framework</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>pepsiLogoRecognizer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -158,7 +159,24 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CoefficientsMenager.cpp" />
+    <ClCompile Include="ColorMenager.cpp" />
+    <ClCompile Include="FilterMenager.cpp" />
     <ClCompile Include="recognizerMain.cpp" />
+    <ClCompile Include="SegmentsMenager.cpp" />
+    <ClCompile Include="ShowMenager.cpp" />
+    <ClCompile Include="simpleMethods.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CoefficientsMenager.h" />
+    <ClInclude Include="ColorMenager.h" />
+    <ClInclude Include="FilterMenager.h" />
+    <ClInclude Include="SegmentsMenager.h" />
+    <ClInclude Include="ShowMenager.h" />
+    <ClInclude Include="simpleMethods.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="pepsiLogoRecognizer.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
