@@ -8,7 +8,12 @@ int FilterMenager::calculateNewValue(int i, int j, cv::Mat_<cv::Vec3b> I, int fi
     return sum;
 }
 
-cv::Mat FilterMenager::executeFilter(cv::Mat& I, int filter[3][3]) {
+cv::Mat FilterMenager::executeFilter(cv::Mat& I) {
+    int filter[3][3] = {
+        {1,1,1},
+        {1,1,1},
+        {1,1,1},
+    };
     int sum = 0;
     for (int p = 0; p < 3; ++p)
         for (int q = 0; q < 3; ++q)
