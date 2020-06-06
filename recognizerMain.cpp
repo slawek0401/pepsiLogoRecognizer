@@ -50,12 +50,6 @@ cv::Mat myResize(cv::Mat &image, int value) {
 int main(int, char *[]) {
     std::cout << "Start ..." << std::endl;
 
-    int filter[3][3] = {
-        {1,1,1},
-        {1,1,1},
-        {1,1,1},
-
-    };
     for (int i = 1; i <= 14; ++i) {
         std::cout << "start " << i << std::endl;
         cv::Mat image = cv::imread("./dataSet/" + std::to_string(i) + ".jpg");
@@ -66,7 +60,7 @@ int main(int, char *[]) {
             resize(image, dest, size);
         else
             dest = image;
-        //executeFilter(dest, filter);
+        //executeFilter(dest);
         //cv::imshow("Oryginal", image);
         /*auto red = findByColor(dest, 150, 0, 0, 255, 120, 120);
         auto blue = findByColor(dest, 0, 0, 80, 100, 100, 255);
