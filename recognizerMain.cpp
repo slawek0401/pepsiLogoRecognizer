@@ -50,7 +50,7 @@ cv::Mat myResize(cv::Mat &image, int value) {
 int main(int, char *[]) {
     std::cout << "Start ..." << std::endl;
 
-    for (int i = 1; i <= 14; ++i) {
+    for (int i = 1; i <= 15; ++i) {
         std::cout << "start " << i << std::endl;
         cv::Mat image = cv::imread("./dataSet/" + std::to_string(i) + ".jpg");
         cv::Mat dest;// = myResize(image, 4);
@@ -66,15 +66,15 @@ int main(int, char *[]) {
         auto blue = findByColor(dest, 0, 0, 80, 100, 100, 255);
         auto white = findByColor(dest, 150, 150, 150, 255, 255, 255);*/
 
-        auto imageHSV = ColorMenager::toHSV(dest);
+        //auto imageHSV = ColorMenager::toHSV(dest);
 
-        //auto red = ColorMenager::findRed(dest);
-        //auto blue = ColorMenager::findBlue(dest);
-        //auto white = ColorMenager::findWhite(dest);
+        auto red = ColorMenager::findRed(dest);
+        auto blue = ColorMenager::findBlue(dest);
+        auto white = ColorMenager::findWhite(dest);
 
-        auto red = and(ColorMenager::findByColor(imageHSV, 0, 50, 160, 255, 255, 180), ColorMenager::findByColor(imageHSV, 0, 50, 0, 255, 255, 15));
-        auto blue = ColorMenager::findByColor(imageHSV, 0, 50, 100, 255, 255, 140);
-        auto white = ColorMenager::findByColor(imageHSV, 150, 0, 0, 255, 100, 180);
+        //auto red = and(ColorMenager::findByColor(imageHSV, 0, 50, 160, 255, 255, 180), ColorMenager::findByColor(imageHSV, 0, 50, 0, 255, 255, 15));
+        //auto blue = ColorMenager::findByColor(imageHSV, 0, 50, 100, 255, 255, 140);
+        //auto white = ColorMenager::findByColor(imageHSV, 150, 0, 0, 255, 100, 180);
 
         auto vec = SegmentsMenager::segmentize(red);
         vec = SegmentsMenager::selectize(vec);
@@ -82,7 +82,7 @@ int main(int, char *[]) {
         auto logos = SegmentsMenager::findLogos(boundingSqueres, red, blue, white);
         auto imageWithSqueres = ShowMenager::drawSqueres(logos, dest);
         cv::imshow("result" + std::to_string(i), imageWithSqueres);
-        cv::imwrite("./hsv/" + std::to_string(i) + ".jpg", imageWithSqueres);
+        cv::imwrite("./lessCoeffitients/" + std::to_string(i) + ".jpg", imageWithSqueres);
        // print(vec);
 
         cv::imshow("red", red);

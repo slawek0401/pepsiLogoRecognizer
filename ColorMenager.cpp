@@ -93,7 +93,7 @@ cv::Mat ColorMenager::findRed(cv::Mat& image) {
                 uchar red = _I(i, j)[2];
                 uchar green = _I(i, j)[1];
                 uchar blue = _I(i, j)[0];
-                if (red > green + 20 && red > blue + 20 && red > 80) {
+                if (red > green + 20 && red > blue + 20 && red > 80 && abs(blue - green) < 50) {
                     _R(i, j)[0] = POSITIVE;
                     _R(i, j)[1] = POSITIVE;
                     _R(i, j)[2] = POSITIVE;

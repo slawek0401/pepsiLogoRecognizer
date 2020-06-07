@@ -43,7 +43,6 @@ std::vector<std::vector<cv::Point>> SegmentsMenager::segmentize(cv::Mat& image, 
                     std::vector<cv::Point> segment;
                     calcSegment(_I, segment, i, j, image.rows, image.cols);
                     result.push_back(segment);
-                    //return result;
                 }
             }
         for (int i = 0; i < image.rows; ++i)
@@ -65,7 +64,7 @@ std::vector<std::vector<cv::Point>> SegmentsMenager::selectize(std::vector<std::
         double m1 = CoefficientsMenager::M1(area);
         double m7 = CoefficientsMenager::M7(area);
         if (m1 > 0.15 && m1 < 0.3 &&
-            m7 > 0.006 && m7 < 0.007)
+            m7 > 0.006 && m7 < 0.0075)
             result.push_back(area);
     }
     return result;
@@ -169,16 +168,13 @@ std::vector<std::vector<cv::Point>> SegmentsMenager::findLogos2(std::vector<std:
         auto whiteSegments = segmentize(white, min.x, min.y, max.x, max.y);
         whiteSegments = selectizeWhite(whiteSegments);
 
-        //int redPixels = countPixels(red, POSITIVE, min.x, min.y, max.x, max.y);
-        //int bluePixels = countPixels(blue, POSITIVE, min.x, min.y, max.x, max.y);
-        //int whitePixels = countPixels(white, POSITIVE, min.x, min.y, max.x, max.y);
         int redPixels = countPixels(red, POSITIVE, min.x, min.y, max.x, max.y);
         for (auto whiteSegment : whiteSegments) {
             int whitePixels = whiteSegment.size();
             for (auto blueSegment : blueSegments) {
                 int bluePixels = blueSegment.size();
                 //std::cout << redPixels << "  " << bluePixels << "  " << whitePixels << "  " << std::endl;
-                if (redPixels > 10 && bluePixels > redPixels / 6 && whitePixels > redPixels / 9 /*&& whitePixels < 2 * redPixels*/) {
+                if (redPixels > 10 && bluePixels > redPixels / 6 && whitePixels > redPixels / 9) {
                     std::vector<cv::Point> vec;
                     vec.push_back(min);
                     vec.push_back(max);
